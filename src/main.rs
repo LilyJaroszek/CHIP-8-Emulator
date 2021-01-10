@@ -27,8 +27,10 @@ pub struct KeyActions {
 }
 
 //TODO
+//Code cleanup
 //Add way to look at memory
 //Instructions display hex
+//Super Chip
 
 fn main() {
     let args: Vec<String> = env::args().collect();
