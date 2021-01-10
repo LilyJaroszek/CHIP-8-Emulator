@@ -23,13 +23,12 @@ pub struct KeyActions {
     pub exit: bool,
     pub next_step: bool,
     pub step: bool,
-    pub debug: bool
+    pub debug: bool,
 }
 
 //TODO
 //Add way to look at memory
 //Instructions display hex
-//Fix keypad
 //Implement sound
 
 fn main() {
@@ -75,6 +74,8 @@ fn main() {
     let fps = 60;
     let frame_time_ms = (1/fps)*1000 as u128;
 
+    let mut key_timer = [0 as u8; 16];
+
     while !exit {
         let start_time = time::Instant::now();
         if !step || next_step {
@@ -86,11 +87,10 @@ fn main() {
             exit: false,
             next_step: false,
             step: false,
-            debug: false
+            debug: false,
         };
-        emu.keypad = [0; 16];
         
-        engine.input(&mut emu.keypad, &mut key_actions);
+        engine.input(&mut emu.keypad, &mut key_actions, &mut key_timer);
 
         exit = key_actions.exit;
         next_step = key_actions.next_step;

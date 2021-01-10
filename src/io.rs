@@ -61,9 +61,19 @@ impl Engine {
         stdout.flush().unwrap();
     }
    
-    pub fn input(&mut self, keypad: &mut [u8; 16], key_actions: &mut KeyActions) {
-        for _x in 0..10 {
-            if let Ok(has_event) = poll(Duration::from_micros(1)){
+    pub fn input(&mut self, keypad: &mut [u8; 16], key_actions: &mut KeyActions, key_timer: &mut [u8; 16]) {
+        for i in 0..key_timer.len(){
+            if key_timer[i] > 0 {
+                key_timer[i]-=1;
+                if key_timer[i] == 0 {
+                    keypad[i] = 0;
+                }
+            } 
+             
+        }
+
+        for _x in 0..1 {
+            if let Ok(has_event) = poll(Duration::from_micros(50)){
                 if has_event{
                     if let Ok(current_event) = read(){
                         match current_event {
@@ -80,6 +90,7 @@ impl Engine {
                                     for key in 0..keypad.len() {
                                         if event == KeyEvent::new(KeyCode::Char(self.keys[key]), KeyModifiers::NONE){
                                             keypad[key] = 1;
+                                            key_timer[key] = 30;
                                         }
                                     }
                                 }
