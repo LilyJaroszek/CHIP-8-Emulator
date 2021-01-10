@@ -29,7 +29,6 @@ pub struct KeyActions {
 //TODO
 //Add way to look at memory
 //Instructions display hex
-//Implement sound
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -77,13 +76,34 @@ fn main() {
     let mut key_timer = [0 as u8; 16];
     let mut draw = false;
 
+    let mut beep = false;
+    let mut beeptimer = 0;
+
+    let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
+    let sink = rodio::Sink::try_new(&stream_handle).unwrap();
+    let source = rodio::source::SineWave::new(500);
+    sink.append(source);
+    sink.pause();
+
     while !exit {
         let start_time = time::Instant::now();
         if !step || next_step {
-            emu.cycle(debug,&mut debug_info, &mut draw);
+            emu.cycle(debug,&mut debug_info, &mut draw, &mut beep);
         }
         engine.draw(emu.gfx,debug,&mut debug_info,step, &mut draw);
         draw = false;
+
+        if beep {
+            sink.play();
+            beeptimer = 25;
+            beep = false;
+        }
+        if beeptimer > 0 {
+            beeptimer -= 1;
+            if beeptimer == 0 {
+                sink.pause();
+            }
+        }
 
         let mut key_actions = KeyActions {
             exit: false,

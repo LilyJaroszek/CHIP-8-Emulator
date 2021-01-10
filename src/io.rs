@@ -108,8 +108,8 @@ impl Engine {
             } 
         }
         
-    }   
-
+    }  
+    
     pub fn deinit(self) {
         let _r = execute!(stdout(),Show,LeaveAlternateScreen);
         disable_raw_mode().unwrap();

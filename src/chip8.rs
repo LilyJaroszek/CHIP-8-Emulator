@@ -60,7 +60,7 @@ impl Chip8 {
         return chip8;
     }
 
-    pub fn cycle(&mut self, debug: bool, debug_info: &mut DebugInfo, draw: &mut bool) {
+    pub fn cycle(&mut self, debug: bool, debug_info: &mut DebugInfo, draw: &mut bool, beep: &mut bool) {
         //Fetch
         let pc = self.pc as usize;
         let op1 = self.memory[pc] as u16;
@@ -561,7 +561,7 @@ impl Chip8 {
         if self.sound_tmr > 0 {
             self.sound_tmr-=1;
             if self.sound_tmr == 0 {
-                //TODO: Add sound
+                *beep = true;
             }
         }
 
