@@ -8,10 +8,22 @@ use crossterm::{execute, queue, style};
 use crossterm::cursor::{Hide,Show,MoveTo};
 use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers};
 
-use crate::{DebugInfo, KeyActions};
+use rodio::{OutputStream,Sink,source};
+
+use crate::DebugInfo;
 
 pub struct Engine {
+    sink: Sink,
+    beep_timer: u8,
     keys: [char; 16],
+    key_timer: [u8; 16]
+}
+
+pub struct KeyActions {
+    pub exit: bool,
+    pub next_step: bool,
+    pub step: bool,
+    pub debug: bool,
 }
 
 impl Engine {
@@ -64,16 +76,23 @@ impl Engine {
         stdout.flush().unwrap();
     }
    
-    pub fn input(&mut self, keypad: &mut [u8; 16], key_actions: &mut KeyActions, key_timer: &mut [u8; 16]) {
-        for i in 0..key_timer.len(){
-            if key_timer[i] > 0 {
-                key_timer[i]-=1;
-                if key_timer[i] == 0 {
+    pub fn input(&mut self, keypad: &mut [u8; 16]) -> KeyActions {
+        for i in 0..self.key_timer.len(){
+            if self.key_timer[i] > 0 {
+                self.key_timer[i]-=1;
+                if self.key_timer[i] == 0 {
                     keypad[i] = 0;
                 }
             } 
              
         }
+
+        let mut key_actions = KeyActions {
+            exit: false,
+            next_step: false,
+            step: false,
+            debug: false,
+        };
 
         for _x in 0..3 {
             if let Ok(has_event) = poll(Duration::from_micros(50)){
@@ -93,7 +112,7 @@ impl Engine {
                                     for key in 0..keypad.len() {
                                         if event == KeyEvent::new(KeyCode::Char(self.keys[key]), KeyModifiers::NONE){
                                             keypad[key] = 1;
-                                            key_timer[key] = 25;
+                                            self.key_timer[key] = 25;
                                         }
                                     }
                                 }
@@ -107,8 +126,24 @@ impl Engine {
             
             } 
         }
+
+        return key_actions;
         
     }  
+
+    pub fn sound (&mut self, beep: &mut bool){
+        if *beep {
+            self.sink.play();
+            self.beep_timer = 25;
+            *beep = false;
+        }
+        if self.beep_timer > 0 {
+            self.beep_timer -= 1;
+            if self.beep_timer == 0 {
+                self.sink.pause();
+            }
+        }
+    }
     
     pub fn deinit(self) {
         let _r = execute!(stdout(),Show,LeaveAlternateScreen);
@@ -119,11 +154,21 @@ impl Engine {
 pub fn init() -> Engine {
     let _r = execute!(stdout(),EnterAlternateScreen,Hide,Clear(ClearType::All));
     enable_raw_mode().unwrap();
+
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let sink = Sink::try_new(&stream_handle).unwrap();
+    let source = source::SineWave::new(500);
+    sink.append(source);
+    sink.pause();
+
     let engine = Engine {
+        sink: sink,
+        beep_timer: 0,
         keys: ['x','1','2','3'
         ,'q','w','e','a'
         ,'s','d','z','c'
-        ,'4','r','f','v']
+        ,'4','r','f','v'],
+        key_timer: [0; 16]
     };
     return engine;
 }

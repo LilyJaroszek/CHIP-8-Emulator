@@ -19,15 +19,11 @@ pub struct DebugInfo {
     pub keypad: [u8; 16]
 }
 
-pub struct KeyActions {
-    pub exit: bool,
-    pub next_step: bool,
-    pub step: bool,
-    pub debug: bool,
-}
+
 
 //TODO
 //Code cleanup
+//fix sound
 //Add way to look at memory
 //Instructions display hex
 //Super Chip
@@ -75,17 +71,10 @@ fn main() {
     let fps = 60;
     let frame_time_ms = (1/fps)*1000 as u128;
 
-    let mut key_timer = [0 as u8; 16];
     let mut draw = false;
-
     let mut beep = false;
-    let mut beeptimer = 0;
 
-    let (_stream, stream_handle) = rodio::OutputStream::try_default().unwrap();
-    let sink = rodio::Sink::try_new(&stream_handle).unwrap();
-    let source = rodio::source::SineWave::new(500);
-    sink.append(source);
-    sink.pause();
+    
 
     while !exit {
         let start_time = time::Instant::now();
@@ -94,27 +83,8 @@ fn main() {
         }
         engine.draw(emu.gfx,debug,&mut debug_info,step, &mut draw);
         draw = false;
-
-        if beep {
-            sink.play();
-            beeptimer = 25;
-            beep = false;
-        }
-        if beeptimer > 0 {
-            beeptimer -= 1;
-            if beeptimer == 0 {
-                sink.pause();
-            }
-        }
-
-        let mut key_actions = KeyActions {
-            exit: false,
-            next_step: false,
-            step: false,
-            debug: false,
-        };
-        
-        engine.input(&mut emu.keypad, &mut key_actions, &mut key_timer);
+        engine.sound(&mut beep);
+        let key_actions = engine.input(&mut emu.keypad);
 
         exit = key_actions.exit;
         next_step = key_actions.next_step;
