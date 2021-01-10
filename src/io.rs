@@ -10,7 +10,7 @@ use crossterm::event::{poll, read, Event, KeyCode, KeyEvent, KeyModifiers};
 
 use rodio::{OutputStream,Sink,source};
 
-use crate::DebugInfo;
+use crate::chip8::DebugInfo;
 
 pub struct Engine {
     sink: Sink,
@@ -27,24 +27,26 @@ pub struct KeyActions {
 }
 
 impl Engine {
-    pub fn draw (&mut self, gfx: [u8; 2048], debug: bool, debug_info: &mut DebugInfo, step: bool, draw: &mut bool){
+    pub fn draw (&mut self, gfx: [u8; 2048]){
         let mut stdout = stdout();
-        if *draw{
-            let _r = queue!(stdout,MoveTo(0, 0));
-            for y in 0..32 {
-                for x in 0..64 {
-                    if gfx[(y*64)+x] != 0 {
-                        let _r = queue!(stdout,style::Print("#"));
-                    } else {
-                        let _r = queue!(stdout,style::Print(" "));
-                    }
+        let _r = queue!(stdout,MoveTo(0, 0));
+        for y in 0..32 {
+            for x in 0..64 {
+                if gfx[(y*64)+x] != 0 {
+                    let _r = queue!(stdout,style::Print("#"));
+                } else {
+                    let _r = queue!(stdout,style::Print(" "));
                 }
-                let _r = queue!(stdout,style::Print("\r\n"));  
             }
-        } else {
-            let _r = queue!(stdout,MoveTo(0, 32));
+            let _r = queue!(stdout,style::Print("\r\n"));  
         }
 
+        stdout.flush().unwrap();
+    }
+
+    pub fn info_draw(&mut self, debug_info: &mut DebugInfo, debug: bool, step: bool){
+        let mut stdout = stdout();
+        let _r = queue!(stdout,MoveTo(0, 32));
         let _r = queue!(stdout,style::Print("\r\n"));
         if debug {
             let _r = queue!(stdout,style::Print(format!("Opcode: {:#06X} {:<32}\r\n",debug_info.opcode,debug_info.opcode_trans)));

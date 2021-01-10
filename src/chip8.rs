@@ -1,8 +1,6 @@
 
 use rand::Rng;
 
-use crate::DebugInfo;
-
 pub struct Chip8 {
     opcode: u16,
     memory: [u8; 4096],
@@ -16,6 +14,19 @@ pub struct Chip8 {
     sp: u16,
     pub keypad: [u8; 16],
 
+}
+
+pub struct DebugInfo {
+    pub opcode: u16,
+    pub v: [u8; 16],
+    pub i: u16,
+    pub pc: u16,
+    pub delay_tmr: u8,
+    pub sound_tmr: u8,
+    pub stack: [u16; 16],
+    pub sp: u16,
+    pub opcode_trans: String,
+    pub keypad: [u8; 16]
 }
 
 impl Chip8 {
