@@ -85,18 +85,20 @@ fn main() {
         let mut key_actions = KeyActions {
             exit: false,
             next_step: false,
-            step: step,
-            debug: debug
+            step: false,
+            debug: false
         };
-
         emu.keypad = [0; 16];
-        
         engine.input(&mut emu.keypad, &mut key_actions);
 
         exit = key_actions.exit;
         next_step = key_actions.next_step;
-        step = key_actions.step;
-        debug = key_actions.debug;
+        if key_actions.step {
+            step = !step;
+        }
+        if key_actions.debug {
+            debug = !debug;
+        }
 
         let end_time = start_time.elapsed();
         let sleeptime = frame_time_ms.saturating_sub(end_time.as_millis());

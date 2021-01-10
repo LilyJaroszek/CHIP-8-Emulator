@@ -72,11 +72,11 @@ impl Engine {
                             if event == KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE) {
                                 key_actions.exit = true;
                             } else if event == KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE){
-                                key_actions.step = !key_actions.step;
+                                key_actions.step = true;
                             } else if event == KeyEvent::new(KeyCode::Down, KeyModifiers::NONE){
                                 key_actions.next_step = true;
                             } else if event == KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE){
-                                key_actions.debug = !key_actions.debug;
+                                key_actions.debug = true;
                             }else {
                                 for key in 0..keypad.len() {
                                     if event == KeyEvent::new(KeyCode::Char(self.keys[key]), KeyModifiers::NONE){
