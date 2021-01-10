@@ -2,8 +2,6 @@ mod chip8;
 mod io;
 use std::env;
 use std::time;
-use std::thread::sleep;
-use std::time::Duration;
 
 
 pub struct DebugInfo {
@@ -54,7 +52,7 @@ fn main() {
     
     let rom = io::load_rom(&args[1]);
     let mut emu = chip8::init(rom);
-    let mut engine = io::init(1);
+    let mut engine = io::init();
     let mut exit = false;
    
     let mut debug_info = DebugInfo {
@@ -89,7 +87,12 @@ fn main() {
             debug: false
         };
         emu.keypad = [0; 16];
-        engine.input(&mut emu.keypad, &mut key_actions);
+
+        let mut min_iter = 0;
+        while frame_time_ms > start_time.elapsed().as_millis() || min_iter < 5 {
+            engine.input(&mut emu.keypad, &mut key_actions);
+            min_iter+=1;
+        }
 
         exit = key_actions.exit;
         next_step = key_actions.next_step;
@@ -100,11 +103,6 @@ fn main() {
             debug = !debug;
         }
 
-        let end_time = start_time.elapsed();
-        let sleeptime = frame_time_ms.saturating_sub(end_time.as_millis());
-        if sleeptime > 0 {
-            sleep(Duration::from_millis(sleeptime as u64))
-        }
     }
 
     engine.deinit();
