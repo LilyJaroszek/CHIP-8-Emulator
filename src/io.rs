@@ -61,53 +61,50 @@ impl Engine {
         stdout.flush().unwrap();
     }
    
-   pub fn input(&mut self, keypad: &mut [u8; 16], key_actions: &mut KeyActions) {
-        enable_raw_mode().unwrap();
-
-        if let Ok(has_event) = poll(Duration::from_millis(0)){
-            if has_event{
-                if let Ok(current_event) = read(){
-                    match current_event {
-                        Event::Key(event) => {
-
-                            if event == KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE) {
-                                key_actions.exit = true;
-                            } else if event == KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE){
-                                key_actions.step = true;
-                            } else if event == KeyEvent::new(KeyCode::Down, KeyModifiers::NONE){
-                                key_actions.next_step = true;
-                            } else if event == KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE){
-                                key_actions.debug = true;
-                            }else {
-                                for key in 0..keypad.len() {
-                                    if event == KeyEvent::new(KeyCode::Char(self.keys[key]), KeyModifiers::NONE){
-                                        keypad[key] = 1;
+    pub fn input(&mut self, keypad: &mut [u8; 16], key_actions: &mut KeyActions) {
+        for _x in 0..10 {
+            if let Ok(has_event) = poll(Duration::from_micros(1)){
+                if has_event{
+                    if let Ok(current_event) = read(){
+                        match current_event {
+                            Event::Key(event) => {
+                                if event == KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE) {
+                                    key_actions.exit = true;
+                                } else if event == KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE){
+                                    key_actions.step = true;
+                                } else if event == KeyEvent::new(KeyCode::Down, KeyModifiers::NONE){
+                                    key_actions.next_step = true;
+                                } else if event == KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE){
+                                    key_actions.debug = true;
+                                }else {
+                                    for key in 0..keypad.len() {
+                                        if event == KeyEvent::new(KeyCode::Char(self.keys[key]), KeyModifiers::NONE){
+                                            keypad[key] = 1;
+                                        }
                                     }
                                 }
+
                             }
-
-                        }
-                        Event::Mouse(_event) => {
-
-                        }
-                        Event::Resize(_x,_y) => {
-
+                            Event::Mouse(_event) => {}
+                            Event::Resize(_x,_y) => {}
                         }
                     }
                 }
-            }
             
-        } 
-        disable_raw_mode().unwrap();
-    }
+            } 
+        }
+        
+    }   
 
     pub fn deinit(self) {
         let _r = execute!(stdout(),Show,LeaveAlternateScreen);
+        disable_raw_mode().unwrap();
     }
 }
 
 pub fn init() -> Engine {
     let _r = execute!(stdout(),EnterAlternateScreen,Hide,Clear(ClearType::All));
+    enable_raw_mode().unwrap();
     let engine = Engine {
         keys: ['x','1','2','3'
         ,'q','w','e','a'
