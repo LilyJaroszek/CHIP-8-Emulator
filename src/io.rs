@@ -75,7 +75,7 @@ impl Engine {
              
         }
 
-        for _x in 0..1 {
+        for _x in 0..3 {
             if let Ok(has_event) = poll(Duration::from_micros(50)){
                 if has_event{
                     if let Ok(current_event) = read(){
@@ -93,7 +93,7 @@ impl Engine {
                                     for key in 0..keypad.len() {
                                         if event == KeyEvent::new(KeyCode::Char(self.keys[key]), KeyModifiers::NONE){
                                             keypad[key] = 1;
-                                            key_timer[key] = 30;
+                                            key_timer[key] = 25;
                                         }
                                     }
                                 }
