@@ -8,6 +8,8 @@ use std::time::Duration;
 //TODO
 //fix sound
 //Add way to look at memory
+//Panic handler
+//Info and documentation
 //Instructions display hex
 //Super Chip
 
@@ -58,6 +60,7 @@ fn main() {
     let cpu_time_ms = (1/cpu_speed)*1000000 as u128;
 
     let mut beep = false;
+    let mut info_redraw = true;
 
     
 
@@ -70,8 +73,9 @@ fn main() {
             if (!step || next_step) && !draw {
                 emu.cycle(debug,&mut debug_info, &mut draw, &mut beep);
             }
-
-            engine.info_draw(&mut debug_info,debug,step);
+            if info_redraw{
+                engine.info_draw(&mut debug_info,debug,step);
+            }
             engine.sound(&mut beep);
 
             let key_actions = engine.input(&mut emu.keypad);
@@ -79,9 +83,11 @@ fn main() {
             next_step = key_actions.next_step;
             if key_actions.step {
                 step = !step;
+                info_redraw = true;
             }
             if key_actions.debug {
                 debug = !debug;
+                info_redraw = true;
             }
 
             let cpu_time_remaining = cpu_time_ms.saturating_sub(start_time_cpu.elapsed().as_micros());
