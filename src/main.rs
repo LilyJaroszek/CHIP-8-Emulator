@@ -6,7 +6,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 //TODO
-//Code cleanup
 //fix sound
 //Add way to look at memory
 //Instructions display hex

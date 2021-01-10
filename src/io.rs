@@ -96,8 +96,8 @@ impl Engine {
             debug: false,
         };
 
-        for _x in 0..3 {
-            if let Ok(has_event) = poll(Duration::from_micros(50)){
+        for _x in 0..1 {
+            if let Ok(has_event) = poll(Duration::from_micros(0)){
                 if has_event{
                     if let Ok(current_event) = read(){
                         match current_event {
@@ -131,7 +131,7 @@ impl Engine {
 
         return key_actions;
         
-    }  
+    }
 
     pub fn sound (&mut self, beep: &mut bool){
         if *beep {
@@ -156,15 +156,9 @@ impl Engine {
 pub fn init() -> Engine {
     let _r = execute!(stdout(),EnterAlternateScreen,Hide,Clear(ClearType::All));
     enable_raw_mode().unwrap();
-
-    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let sink = Sink::try_new(&stream_handle).unwrap();
-    let source = source::SineWave::new(500);
-    sink.append(source);
-    sink.pause();
-
+    
     let engine = Engine {
-        sink: sink,
+        sink: Sink::try_new(&OutputStream::try_default().unwrap().1).unwrap(),
         beep_timer: 0,
         keys: ['x','1','2','3'
         ,'q','w','e','a'
@@ -172,6 +166,9 @@ pub fn init() -> Engine {
         ,'4','r','f','v'],
         key_timer: [0; 16]
     };
+    engine.sink.append(source::SineWave::new(500));
+    engine.sink.pause();
+
     return engine;
 }
 
