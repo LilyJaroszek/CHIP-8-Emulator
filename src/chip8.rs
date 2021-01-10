@@ -60,7 +60,7 @@ impl Chip8 {
         return chip8;
     }
 
-    pub fn cycle(&mut self, debug: bool, debug_info: &mut DebugInfo) {
+    pub fn cycle(&mut self, debug: bool, debug_info: &mut DebugInfo, draw: &mut bool) {
         //Fetch
         let pc = self.pc as usize;
         let op1 = self.memory[pc] as u16;
@@ -390,6 +390,7 @@ impl Chip8 {
             let reg_y = ((self.opcode & 0x00F0) >> 4) as usize;
             let height = self.opcode & 0x000F;
             self.v[0xF] = 0;
+            *draw = true;
 
             for y in 0..height {
                 let line = self.memory[(self.i+y) as usize];

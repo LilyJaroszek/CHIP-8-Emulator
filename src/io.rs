@@ -15,26 +15,29 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn draw (&mut self, gfx: [u8; 2048], debug: bool, debug_info: &mut DebugInfo, step: bool){
+    pub fn draw (&mut self, gfx: [u8; 2048], debug: bool, debug_info: &mut DebugInfo, step: bool, draw: &mut bool){
         let mut stdout = stdout();
-
-        let _r = queue!(stdout,MoveTo(0, 0));
-        for y in 0..32 {
-            for x in 0..64 {
-                if gfx[(y*64)+x] != 0 {
-                    let _r = queue!(stdout,style::Print("#"));
-                } else {
-                    let _r = queue!(stdout,style::Print(" "));
+        if *draw{
+            let _r = queue!(stdout,MoveTo(0, 0));
+            for y in 0..32 {
+                for x in 0..64 {
+                    if gfx[(y*64)+x] != 0 {
+                        let _r = queue!(stdout,style::Print("#"));
+                    } else {
+                        let _r = queue!(stdout,style::Print(" "));
+                    }
                 }
+                let _r = queue!(stdout,style::Print("\r\n"));  
             }
-            let _r = queue!(stdout,style::Print("\r\n"));  
+        } else {
+            let _r = queue!(stdout,MoveTo(0, 32));
         }
 
         let _r = queue!(stdout,style::Print("\r\n"));
         if debug {
             let _r = queue!(stdout,style::Print(format!("Opcode: {:#06X} {:<32}\r\n",debug_info.opcode,debug_info.opcode_trans)));
             let _r = queue!(stdout,style::Print(format!("Program Counter: {:#06X}\r\n",debug_info.pc)));
-            let _r = queue!(stdout,style::Print(format!("I: {:#06X}",debug_info.i)));
+            let _r = queue!(stdout,style::Print(format!("I: {:#06X}\r\n",debug_info.i)));
             let _r = queue!(stdout,style::Print(format!("Stack Pointer: {:#06X}\r\n",debug_info.sp)));
             let _r = queue!(stdout,style::Print(format!("Delay Timer: {:#04X}\r\n",debug_info.delay_tmr)));
             let _r = queue!(stdout,style::Print(format!("Sound Timer: {:#04X}\r\n",debug_info.sound_tmr)));

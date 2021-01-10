@@ -75,13 +75,15 @@ fn main() {
     let frame_time_ms = (1/fps)*1000 as u128;
 
     let mut key_timer = [0 as u8; 16];
+    let mut draw = false;
 
     while !exit {
         let start_time = time::Instant::now();
         if !step || next_step {
-            emu.cycle(debug,&mut debug_info);
+            emu.cycle(debug,&mut debug_info, &mut draw);
         }
-        engine.draw(emu.gfx,debug,&mut debug_info,step);
+        engine.draw(emu.gfx,debug,&mut debug_info,step, &mut draw);
+        draw = false;
 
         let mut key_actions = KeyActions {
             exit: false,
