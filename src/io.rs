@@ -2,6 +2,7 @@ use std::path::Path;
 use std::fs::File;
 use std::io::{Read, stdout, Write};
 use std::time::Duration;
+use std::time::SystemTime;
 
 use crossterm::terminal::{Clear,ClearType,enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{execute, queue, style};
@@ -24,6 +25,7 @@ pub struct KeyActions {
     pub next_step: bool,
     pub step: bool,
     pub debug: bool,
+    pub mem_dump: bool
 }
 
 impl Engine {
@@ -47,7 +49,7 @@ impl Engine {
     }
     
     //Draws the debug information and step information
-    pub fn info_draw(&mut self, debug_info: &mut DebugInfo, debug: bool, step: bool){
+    pub fn info_draw(&mut self, debug_info: DebugInfo, debug: bool, step: bool){
         let mut stdout = stdout();
         let _r = queue!(stdout,MoveTo(0, 32));
         let _r = queue!(stdout,style::Print("\r\n"));
@@ -100,6 +102,7 @@ impl Engine {
             next_step: false,
             step: false,
             debug: false,
+            mem_dump: false,
         };
 
         for _x in 0..1 {
@@ -116,6 +119,8 @@ impl Engine {
                                     key_actions.next_step = true;
                                 } else if event == KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE){
                                     key_actions.debug = true;
+                                }else if event == KeyEvent::new(KeyCode::End, KeyModifiers::NONE){
+                                    key_actions.mem_dump = true;
                                 }else {
                                     for key in 0..keypad.len() {
                                         if event == KeyEvent::new(KeyCode::Char(self.keys[key]), KeyModifiers::NONE){
@@ -199,6 +204,22 @@ pub fn load_rom(file: &str) -> [u8; 3584] {
         let _n = file.read(&mut rom);
     }
     return rom;
+}
+
+pub fn write_mem_dump_file(mem_dump: [u8; 4096]){
+    //TODO: change path to folder, unique file names, and readable files
+    let path = Path::new("dump.txt");
+    let display = path.display();
+
+    let mut file = match File::create(&path) {
+        Err(why) => panic!("couldn't create {}: {}", display, why),
+        Ok(file) => file,
+    };
+
+    match file.write_all(&mem_dump) {
+        Err(why) => panic!("couldn't write to {}: {}", display, why),
+        Ok(_) => println!("successfully wrote to {}", display),
+    }
 }
 
 

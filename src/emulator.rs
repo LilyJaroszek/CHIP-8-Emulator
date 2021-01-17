@@ -6,7 +6,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 /*TODO:
-Memory Dumper
 Panic handler
 How to use controls documentation
 Configuration file
@@ -73,7 +72,7 @@ pub fn emulator_loop() {
             }
 
             if debug_redraw{
-                engine.info_draw(&mut emu.debug_info,debug,step);
+                engine.info_draw(emu.to_owned().debug_info,debug,step);
             }
 
             engine.sound(&mut beep);
@@ -90,13 +89,16 @@ pub fn emulator_loop() {
                 debug = !debug;
                 debug_redraw = true;
             }
+            if key_actions.mem_dump {
+                io::write_mem_dump_file(emu.to_owned().mem_dump());
+            }
 
             let cpu_time_remaining = cpu_time_ms.saturating_sub(start_time_cpu.elapsed().as_micros());
             if cpu_time_remaining > 0 {
                 sleep(Duration::from_micros(cpu_time_remaining as u64));
             }
         }
-        engine.draw(emu.gfx);
+        engine.draw(emu.to_owned().gfx);
     }
 
     engine.deinit();

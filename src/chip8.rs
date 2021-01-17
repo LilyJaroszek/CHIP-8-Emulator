@@ -1,6 +1,7 @@
 
 use rand::Rng;
 
+#[derive(Clone)]
 pub struct Chip8 {
     opcode: u16,
     memory: [u8; 4096],
@@ -17,6 +18,7 @@ pub struct Chip8 {
 
 }
 
+#[derive(Clone)]
 pub struct DebugInfo {
     pub opcode: u16,
     pub v: [u8; 16],
@@ -590,6 +592,10 @@ impl Chip8 {
             }
         }
 
+    }
+
+    pub fn mem_dump(self)-> [u8; 4096] {
+        return self.memory;
     }
 
 }
