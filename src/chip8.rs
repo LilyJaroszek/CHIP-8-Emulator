@@ -13,6 +13,7 @@ pub struct Chip8 {
     stack: [u16; 16],
     sp: u16,
     pub keypad: [u8; 16],
+    pub debug_info: DebugInfo
 
 }
 
@@ -43,6 +44,18 @@ impl Chip8 {
             stack: [0; 16],
             sp: 0,
             keypad: [0; 16],
+            debug_info: DebugInfo {
+                opcode: 0,
+                v: [0; 16],
+                i: 0,
+                pc: 0,
+                delay_tmr: 0,
+                sound_tmr: 0,
+                stack: [0; 16],
+                sp: 0,
+                opcode_trans: "".to_string(),
+                keypad: [0; 16]
+            }
         };
         let fontset: [u8; 80] = [
             0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -71,8 +84,8 @@ impl Chip8 {
         return chip8;
     }
 
-    pub fn cycle(&mut self, debug: bool, debug_info: &mut DebugInfo, draw: &mut bool, beep: &mut bool) {
-        //Fetch
+    pub fn cycle(&mut self, debug: bool, draw: &mut bool, beep: &mut bool) {
+        //Fetch the Opcode from memory
         let pc = self.pc as usize;
         let op1 = self.memory[pc] as u16;
         let op2 = self.memory[pc+1] as u16;
@@ -80,20 +93,20 @@ impl Chip8 {
         self.opcode = opcode;
 
         if debug {
-            debug_info.opcode = self.opcode;
-            debug_info.i = self.i;
-            debug_info.pc = self.pc;
-            debug_info.delay_tmr = self.delay_tmr;
-            debug_info.sound_tmr = self.sound_tmr;
-            debug_info.sp = self.sp;
+            self.debug_info.opcode = self.opcode;
+            self.debug_info.i = self.i;
+            self.debug_info.pc = self.pc;
+            self.debug_info.delay_tmr = self.delay_tmr;
+            self.debug_info.sound_tmr = self.sound_tmr;
+            self.debug_info.sp = self.sp;
             for i in 0..16 {
-                debug_info.v[i] = self.v[i];
-                debug_info.stack[i] = self.stack[i];
-                debug_info.keypad[i] = self.keypad[i];
+                self.debug_info.v[i] = self.v[i];
+                self.debug_info.stack[i] = self.stack[i];
+                self.debug_info.keypad[i] = self.keypad[i];
             }    
         }
 
-        //Decode
+        //Decode the instruction
         let first = self.opcode & 0xF000;
         let fl = self.opcode & 0xF00F;
         let ftl = self.opcode & 0xF0FF;
@@ -105,7 +118,7 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "DISPLAY_CLEAR".to_string();
+                self.debug_info.opcode_trans = "DISPLAY_CLEAR".to_string();
             }
 
         } else if self.opcode == 0x00EE { //Return from subroutine
@@ -114,15 +127,15 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "RETURN".to_string();
+                self.debug_info.opcode_trans = "RETURN".to_string();
             }
 
         } else if first == 0x1000 { //Jump to address NNN
             self.pc = self.opcode & 0x0FFF;
 
             if debug {
-                debug_info.opcode_trans = "JUMP ".to_string();
-                debug_info.opcode_trans.push_str(&self.pc.to_string());
+                self.debug_info.opcode_trans = "JUMP ".to_string();
+                self.debug_info.opcode_trans.push_str(&self.pc.to_string());
             }
 
         } else if first == 0x2000 { //Call subroutine at NNN
@@ -131,8 +144,8 @@ impl Chip8 {
             self.pc = self.opcode & 0x0FFF;
 
             if debug {
-                debug_info.opcode_trans = "SUBROUTINE ".to_string();
-                debug_info.opcode_trans.push_str(&self.pc.to_string());
+                self.debug_info.opcode_trans = "SUBROUTINE ".to_string();
+                self.debug_info.opcode_trans.push_str(&self.pc.to_string());
             }
 
         } else if first == 0x3000 { //Skip next instruction if Vx == NN
@@ -144,10 +157,10 @@ impl Chip8 {
             }
 
             if debug {
-                debug_info.opcode_trans = "SKIP_IF_EQUAL V".to_string();
-                debug_info.opcode_trans.push_str(&reg.to_string());
-                debug_info.opcode_trans.push_str(" ");
-                debug_info.opcode_trans.push_str(&num.to_string());
+                self.debug_info.opcode_trans = "SKIP_IF_EQUAL V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg.to_string());
+                self.debug_info.opcode_trans.push_str(" ");
+                self.debug_info.opcode_trans.push_str(&num.to_string());
             }
 
         } else if first == 0x4000 { //Skip next instruction if Vx != NN
@@ -159,10 +172,10 @@ impl Chip8 {
             }
 
             if debug {
-                debug_info.opcode_trans = "SKIP_IF_NOT_EQUAL V".to_string();
-                debug_info.opcode_trans.push_str(&reg.to_string());
-                debug_info.opcode_trans.push_str(" ");
-                debug_info.opcode_trans.push_str(&num.to_string());
+                self.debug_info.opcode_trans = "SKIP_IF_NOT_EQUAL V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg.to_string());
+                self.debug_info.opcode_trans.push_str(" ");
+                self.debug_info.opcode_trans.push_str(&num.to_string());
             }
         
         } else if fl == 0x5000 { //Skip next instruction if Vx == Vy
@@ -174,10 +187,10 @@ impl Chip8 {
             }
 
             if debug {
-                debug_info.opcode_trans = "SKIP_IF_EQUAL V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans = "SKIP_IF_EQUAL V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
             }
         
         } else if first == 0x6000 { //Set Vx == NN
@@ -187,10 +200,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SET V".to_string();
-                debug_info.opcode_trans.push_str(&reg.to_string());
-                debug_info.opcode_trans.push_str(" ");
-                debug_info.opcode_trans.push_str(&num.to_string());
+                self.debug_info.opcode_trans = "SET V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg.to_string());
+                self.debug_info.opcode_trans.push_str(" ");
+                self.debug_info.opcode_trans.push_str(&num.to_string());
             }
 
         } else if first == 0x7000 { //Add NN to Vx
@@ -201,10 +214,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "ADD V".to_string();
-                debug_info.opcode_trans.push_str(&reg.to_string());
-                debug_info.opcode_trans.push_str(" ");
-                debug_info.opcode_trans.push_str(&num.to_string());
+                self.debug_info.opcode_trans = "ADD V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg.to_string());
+                self.debug_info.opcode_trans.push_str(" ");
+                self.debug_info.opcode_trans.push_str(&num.to_string());
             }
 
 
@@ -215,10 +228,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SET V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans = "SET V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
             }
 
         } else if fl == 0x8001 { //Set Vx = Vx | Vy
@@ -229,10 +242,10 @@ impl Chip8 {
 
             
             if debug {
-                debug_info.opcode_trans = "OR V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans = "OR V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
             }
     
         } else if fl == 0x8002 { //Set Vx = Vx & Vy
@@ -242,10 +255,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "AND V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans = "AND V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
             }
     
         } else if fl == 0x8003 { //Set Vx = Vx ^ Vy
@@ -255,10 +268,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "XOR V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans = "XOR V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
             }
     
         } else if fl == 0x8004 { //Add Vy to Vx
@@ -276,10 +289,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "ADD V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans = "ADD V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
             }
     
         } else if fl == 0x8005 { //Subtract Vy from Vx
@@ -297,10 +310,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SUB V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans = "SUB V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
             }
     
         } else if fl == 0x8006 { //Bitshift Vx right by 1
@@ -310,8 +323,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "BITSHIFT_RIGHT V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "BITSHIFT_RIGHT V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
     
         } else if fl == 0x8007 { //subtract Vx from Vy
@@ -329,10 +342,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SUB V".to_string();
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "SUB V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
     
         } else if fl == 0x800E { //Bitshift Vx left by 1
@@ -342,8 +355,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "BITSHIFT_LEFT V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "BITSHIFT_LEFT V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
     
         } else if fl == 0x9000 { //Skip next instruction if Vx != Vy
@@ -355,10 +368,10 @@ impl Chip8 {
             }
 
             if debug {
-                debug_info.opcode_trans = "SKIP_IF_NOT_EQUAL V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans = "SKIP_IF_NOT_EQUAL V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
             }
 
         } else if first == 0xA000 { //Set I to address NNN
@@ -367,8 +380,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SET_I ".to_string();
-                debug_info.opcode_trans.push_str(&address.to_string());
+                self.debug_info.opcode_trans = "SET_I ".to_string();
+                self.debug_info.opcode_trans.push_str(&address.to_string());
             }
 
 
@@ -378,8 +391,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "JUMP_TO_V0_ADD ".to_string();
-                debug_info.opcode_trans.push_str(&address.to_string());
+                self.debug_info.opcode_trans = "JUMP_TO_V0_ADD ".to_string();
+                self.debug_info.opcode_trans.push_str(&address.to_string());
             }
 
         } else if first == 0xC000 { //Set Vx to a random number & NN
@@ -390,10 +403,10 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SET_TO_RANDOM_AND V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" ");
-                debug_info.opcode_trans.push_str(&num.to_string());
+                self.debug_info.opcode_trans = "SET_TO_RANDOM_AND V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" ");
+                self.debug_info.opcode_trans.push_str(&num.to_string());
             }
 
         } else if first == 0xD000 { //Draw sprite
@@ -421,12 +434,12 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "DRAW_SPRITE_XYH V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
-                debug_info.opcode_trans.push_str(" V");
-                debug_info.opcode_trans.push_str(&reg_y.to_string());
-                debug_info.opcode_trans.push_str(" ");
-                debug_info.opcode_trans.push_str(&height.to_string());
+                self.debug_info.opcode_trans = "DRAW_SPRITE_XYH V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans.push_str(" V");
+                self.debug_info.opcode_trans.push_str(&reg_y.to_string());
+                self.debug_info.opcode_trans.push_str(" ");
+                self.debug_info.opcode_trans.push_str(&height.to_string());
             }
 
         } else if ftl == 0xE09E { //Skip next instruction if key specified is pressed
@@ -438,8 +451,8 @@ impl Chip8 {
             }
 
             if debug {
-                debug_info.opcode_trans = "SKIP_IF_KEY_PRESSED ".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "SKIP_IF_KEY_PRESSED ".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xE0A1 { //Skip next instruction if key specified is not pressed
@@ -451,8 +464,8 @@ impl Chip8 {
             }
 
             if debug {
-                debug_info.opcode_trans = "SKIP_IF_KEY_NOT_PRESSED ".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "SKIP_IF_KEY_NOT_PRESSED ".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
 
@@ -462,8 +475,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SET_TO_DELAY_TIMER V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "SET_TO_DELAY_TIMER V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xF00A { //Keypress is waited for and stored in Vx
@@ -477,8 +490,8 @@ impl Chip8 {
             }
 
             if debug {
-                debug_info.opcode_trans = "WAIT_FOR_KEYPRESS_AND_STORE V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "WAIT_FOR_KEYPRESS_AND_STORE V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xF015 { //Set delay timer to Vx
@@ -487,8 +500,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SET_DELAY_TIMER V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "SET_DELAY_TIMER V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xF018 { //Set sound timer to Vx
@@ -497,8 +510,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SET_SOUND_TIMER V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "SET_SOUND_TIMER V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xF01E { //Add Vx to I
@@ -507,8 +520,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "ADD_TO_I V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "ADD_TO_I V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xF029 { //Set I to location of a character sprite
@@ -517,8 +530,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "SET_I_TO_SPRITE ".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "SET_I_TO_SPRITE ".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xF033 { //Stores BCD Representation at address at I
@@ -529,8 +542,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "STORE_BCD_AT_I V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "STORE_BCD_AT_I V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xF055 { //Store V0 to VX in memory starting at I
@@ -543,8 +556,8 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "STORE_V0_TO_VX_AT_I V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "STORE_V0_TO_VX_AT_I V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else if ftl == 0xF065 { //Load V0 to VX from memory starting at I
@@ -557,15 +570,15 @@ impl Chip8 {
             self.pc += 2;
 
             if debug {
-                debug_info.opcode_trans = "LOAD_V0_TO_VX_AT_I V".to_string();
-                debug_info.opcode_trans.push_str(&reg_x.to_string());
+                self.debug_info.opcode_trans = "LOAD_V0_TO_VX_AT_I V".to_string();
+                self.debug_info.opcode_trans.push_str(&reg_x.to_string());
             }
 
         } else {
             panic!("Unknown opcode: [{:X}]",self.opcode)
         }
         
-        //Timers
+        //Increment the timers if they are running
         if self.delay_tmr > 0 {
             self.delay_tmr-=1;
         }

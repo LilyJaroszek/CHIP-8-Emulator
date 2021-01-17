@@ -13,7 +13,7 @@ use rodio::{OutputStream,Sink,source};
 use crate::chip8::DebugInfo;
 
 pub struct Engine {
-    sink: Sink,
+    sound_sink: Sink,
     beep_timer: u8,
     keys: [char; 16],
     key_timer: [u8; 16]
@@ -27,6 +27,8 @@ pub struct KeyActions {
 }
 
 impl Engine {
+
+    //Draws the chip8 graphics screen
     pub fn draw (&mut self, gfx: [u8; 2048]){
         let mut stdout = stdout();
         let _r = queue!(stdout,MoveTo(0, 0));
@@ -43,7 +45,8 @@ impl Engine {
 
         stdout.flush().unwrap();
     }
-
+    
+    //Draws the debug information and step information
     pub fn info_draw(&mut self, debug_info: &mut DebugInfo, debug: bool, step: bool){
         let mut stdout = stdout();
         let _r = queue!(stdout,MoveTo(0, 32));
@@ -79,6 +82,9 @@ impl Engine {
     }
    
     pub fn input(&mut self, keypad: &mut [u8; 16]) -> KeyActions {
+        /*When a key is dectected as pressed a timer is used to keep the correponding key variable
+        in the pressed value for a number of cycles since otherwise the CPU will not reliably
+        dectect when the key is being pressed*/
         for i in 0..self.key_timer.len(){
             if self.key_timer[i] > 0 {
                 self.key_timer[i]-=1;
@@ -133,16 +139,17 @@ impl Engine {
         
     }
 
+    //TODO: fix sound, currently does not beep when requested
     pub fn sound (&mut self, beep: &mut bool){
         if *beep {
-            self.sink.play();
+            self.sound_sink.play();
             self.beep_timer = 25;
             *beep = false;
         }
         if self.beep_timer > 0 {
             self.beep_timer -= 1;
             if self.beep_timer == 0 {
-                self.sink.pause();
+                self.sound_sink.pause();
             }
         }
     }
@@ -158,7 +165,7 @@ pub fn init() -> Engine {
     enable_raw_mode().unwrap();
     
     let engine = Engine {
-        sink: Sink::try_new(&OutputStream::try_default().unwrap().1).unwrap(),
+        sound_sink: Sink::try_new(&OutputStream::try_default().unwrap().1).unwrap(),
         beep_timer: 0,
         keys: ['x','1','2','3'
         ,'q','w','e','a'
@@ -166,8 +173,8 @@ pub fn init() -> Engine {
         ,'4','r','f','v'],
         key_timer: [0; 16]
     };
-    engine.sink.append(source::SineWave::new(500));
-    engine.sink.pause();
+    engine.sound_sink.append(source::SineWave::new(500));
+    engine.sound_sink.pause();
 
     return engine;
 }
