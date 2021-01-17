@@ -106,6 +106,7 @@ impl Chip8 {
             }    
         }
 
+        //TODO: Instruction translations display hex
         //Decode the instruction
         let first = self.opcode & 0xF000;
         let fl = self.opcode & 0xF00F;

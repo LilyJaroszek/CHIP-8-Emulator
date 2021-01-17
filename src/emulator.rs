@@ -9,7 +9,7 @@ use std::time::Duration;
 Memory Dumper
 Panic handler
 How to use controls documentation
-Instructions display hex
+Configuration file
 Super Chip implementation
 */
 
