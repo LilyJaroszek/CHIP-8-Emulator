@@ -2,7 +2,7 @@ use std::path::Path;
 use std::fs::File;
 use std::io::{Read, stdout, Write};
 use std::time::Duration;
-use std::time::SystemTime;
+use chrono::Utc;
 
 use crossterm::terminal::{Clear,ClearType,enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{execute, queue, style};
@@ -207,8 +207,9 @@ pub fn load_rom(file: &str) -> [u8; 3584] {
 }
 
 pub fn write_mem_dump_file(mem_dump: [u8; 4096]){
-    //TODO: change path to folder, unique file names, and readable files
-    let path = Path::new("dump.txt");
+    let date = Utc::now().timestamp();
+    let path = format!("memory_dumps/{}.txt",date);
+    let path = Path::new(&path);
     let display = path.display();
 
     let mut file = match File::create(&path) {
@@ -216,9 +217,15 @@ pub fn write_mem_dump_file(mem_dump: [u8; 4096]){
         Ok(file) => file,
     };
 
-    match file.write_all(&mem_dump) {
+    let mut to_write = "".to_owned();
+
+    for loc in (0..4096).step_by(2) {
+        to_write.push_str(&format!("{:#05X} {:#04X} {:#04X}\r\n",loc,mem_dump[loc],mem_dump[loc+1]));
+    }
+
+    match file.write_all(to_write.as_bytes()) {
         Err(why) => panic!("couldn't write to {}: {}", display, why),
-        Ok(_) => println!("successfully wrote to {}", display),
+        Ok(ok) => ok,
     }
 }
 
