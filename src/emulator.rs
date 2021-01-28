@@ -6,7 +6,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 /*TODO:
-How to use controls documentation
 Configuration file
 Super Chip implementation
 */
