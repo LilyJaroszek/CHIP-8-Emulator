@@ -1,7 +1,7 @@
 # Chip-8-Emulator
-A simple CHIP-8 emulator written in Rust that uses the terminal for display output.
+A simple CHIP-8 emulator written in Rust that uses the command line for display output.
 ## Setup
-Add a folder named "roms" where the executable is located. Add the CHIP-8 ROMs you want to run in the folder.
+Build the program source code. Add a folder named "roms" where the built executable is located. Add the CHIP-8 ROMs you want to run in the folder. You can now run the executable in the command line.
 ## Command Line Usage
 chip-8_emulator \<ROM Name\> \<Flags (optional)\>
 ### Command Line Flags
