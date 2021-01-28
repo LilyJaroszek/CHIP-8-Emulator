@@ -6,7 +6,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 /*TODO:
-Panic handler
 How to use controls documentation
 Configuration file
 Super Chip implementation
@@ -16,7 +15,7 @@ pub fn emulator_loop() {
     //Check the command line args for specified ROM and flags
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        panic!("Error: Need to specify program location as Command Line Arg");
+        panic!("Error: Need to specify program location as first command line arg");
     }
     let mut debug = false;
     let mut step = false;
