@@ -1,5 +1,6 @@
 use std::path::Path;
 use std::fs::File;
+use std::fs;
 use std::io::{Read, stdout, Write};
 use std::time::Duration;
 use chrono::Utc;
@@ -208,6 +209,12 @@ pub fn load_rom(file: &str) -> [u8; 3584] {
 
 pub fn write_mem_dump_file(mem_dump: [u8; 4096]){
     let date = Utc::now().timestamp();
+
+    match fs::create_dir_all("memory_dumps") {
+        Err(why) => panic!("couldn't create folder \"memory_dumps\": {}", why),
+        Ok(ok) => ok,
+    };
+    
     let path = format!("memory_dumps/{}.txt",date);
     let path = Path::new(&path);
     let display = path.display();
